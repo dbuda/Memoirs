@@ -71,6 +71,7 @@ class RecordResponse(BaseModel):
     record_type: str
     record_key: str
     payload: dict[str, Any]
+    effective_payload: dict[str, Any] | None
     confidence: float
     is_explicit: bool
     is_inferred: bool

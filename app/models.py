@@ -71,6 +71,16 @@ class KnowledgeRecord(Base):
         back_populates="record", cascade="all, delete-orphan"
     )
 
+    @property
+    def effective_payload(self) -> dict[str, Any] | None:
+        """Resolve the latest editorial decision without changing the model output."""
+        if not self.reviews:
+            return self.payload
+        latest = max(self.reviews, key=lambda review: review.id)
+        if latest.decision == "rejected":
+            return None
+        return latest.reviewed_value or self.payload
+
 
 class Evidence(Base):
     __tablename__ = "evidence"
