@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -53,3 +52,27 @@ class JobResponse(BaseModel):
     attempts: int
     task_id: str | None
     error_message: str | None
+
+
+class EvidenceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    segment_id: int
+    char_start: int
+    char_end: int
+    quote: str
+
+
+class RecordResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    record_type: str
+    record_key: str
+    payload: dict[str, Any]
+    confidence: float
+    is_explicit: bool
+    is_inferred: bool
+    review_status: str
+    evidence: list[EvidenceResponse]

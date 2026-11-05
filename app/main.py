@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.config import get_settings
+from app.api.routes import router
 
 
 settings = get_settings()
@@ -9,6 +10,7 @@ app = FastAPI(
     title="Memoirs Evidence Extraction Demo",
     version="0.1.0",
 )
+app.include_router(router)
 
 
 @app.get("/health")
