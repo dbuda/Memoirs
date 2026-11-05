@@ -174,3 +174,23 @@ The implementation plan and technical decisions are documented in [`docs/IMPLEME
 ## Data and Privacy
 
 All initial transcripts will be fictional and created specifically for this demo. No real family histories, personal data or private interviews should be committed to the repository.
+
+## Included Fictional Corpus
+
+The initial corpus contains three related interviews:
+
+- `01_nora_bennett.txt` follows Nora Bennett, a former library assistant and cafe owner.
+- `02_priya_bennett.txt` follows Priya Bennett, Nora's daughter, and provides a second account of shared family events.
+- `03_mei_tan.txt` follows Mei Tan, Nora's friend and former business partner.
+
+The interviews intentionally contain useful extraction edge cases:
+
+- Nora, Norrie, Nor and Nana Norrie are references to the same person.
+- Mei Tan and Mei Chen are names used by the same person at different points in her life.
+- The birth year for Priya is remembered differently by Nora and Priya.
+- The opening year of The Lantern is described as 1991 or 1992 depending on whether the lease or the opening is meant.
+- The meeting date for Nora and Mei is uncertain and described differently by the speakers.
+- The red suitcase event is described by two witnesses with different months.
+- Relative dates, approximate dates, explicit facts, inferred values and personal interpretations appear throughout the transcripts.
+
+These conflicts are intentional. A correct system should preserve the competing evidence and make the conflict reviewable instead of silently selecting one version.
