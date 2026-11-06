@@ -112,6 +112,8 @@ Reviewers can approve, correct or reject a candidate. Corrections are stored as 
 - compare extraction runs;
 - identify recurring failure modes.
 
+When a document is reprocessed, older runs remain available for audit, but `/documents/{document_id}/records` returns only the latest run. Existing review decisions are carried forward by stable record type and key, so a new model output does not silently undo an editorial correction.
+
 ## Quality Evaluation
 
 The demo will contain a small reviewed reference set created from the fictional transcripts. Tests and evaluation code will measure at least:

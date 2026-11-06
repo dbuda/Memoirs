@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.models import Document, ExtractionRun, Job, KnowledgeRecord, ReviewDecision, Segment
@@ -77,11 +77,16 @@ def get_job(job_id: int, db: Session = Depends(get_db)) -> Job:
 
 @router.get("/documents/{document_id}/records", response_model=list[RecordResponse])
 def list_records(document_id: int, db: Session = Depends(get_db)) -> list:
+    latest_run_id = (
+        select(func.max(ExtractionRun.id))
+        .where(ExtractionRun.document_id == document_id)
+        .scalar_subquery()
+    )
     records = db.scalars(
         select(KnowledgeRecord)
-        .join(ExtractionRun)
-        .where(ExtractionRun.document_id == document_id)
-        .order_by(ExtractionRun.id, KnowledgeRecord.id)
+        .options(selectinload(KnowledgeRecord.evidence), selectinload(KnowledgeRecord.reviews))
+        .where(KnowledgeRecord.run_id == latest_run_id)
+        .order_by(KnowledgeRecord.id)
     ).all()
     return records
 

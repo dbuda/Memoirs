@@ -35,6 +35,8 @@ Store original date expressions, interpreted ranges, precision, confidence and i
 
 Review decisions should be append-only or versioned. Reprocessing a document must not erase an approved correction.
 
+The API should expose the latest extraction run as the effective result while retaining older runs for audit and comparison. Review decisions are carried forward to matching records by stable record type and key.
+
 ### Prefer a replaceable pipeline over a large platform
 
 Use a small FastAPI application, PostgreSQL, Redis and a Celery worker. The demo should show a real asynchronous boundary because extraction is long-running and failure-prone. The architecture should still remain small: one API container, one worker container, one PostgreSQL container and one Redis container. Kubernetes, Celery Beat and multiple domain services are out of scope.

@@ -6,7 +6,8 @@ from app.db import SessionLocal
 from app.extraction.chunking import TranscriptSegment, build_chunks
 from app.extraction.provider import FakeExtractionProvider
 from app.extraction.validation import validate_records
-from app.models import Evidence, ExtractionRun, Job, KnowledgeRecord, Segment
+from app.models import Evidence, ExtractionRun, Job, KnowledgeRecord, ReviewDecision, Segment
+from sqlalchemy.orm import selectinload
 
 
 class RetryableExtractionError(RuntimeError):
@@ -68,7 +69,27 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
                 for record in validate_records(provider.extract(chunk), segments):
                     records_by_key.setdefault((record.record_type, record.record_key), record)
 
+            previous_records = db.scalars(
+                select(KnowledgeRecord)
+                .join(ExtractionRun)
+                .options(selectinload(KnowledgeRecord.reviews))
+                .where(
+                    ExtractionRun.document_id == run.document_id,
+                    ExtractionRun.id != run.id,
+                )
+                .order_by(KnowledgeRecord.id.desc())
+            ).all()
+            previous_by_key = {}
+            for previous in previous_records:
+                previous_by_key.setdefault((previous.record_type, previous.record_key), previous)
+
             for record in records_by_key.values():
+                previous = previous_by_key.get((record.record_type, record.record_key))
+                previous_review = (
+                    max(previous.reviews, key=lambda review: review.id)
+                    if previous and previous.reviews
+                    else None
+                )
                 db_record = KnowledgeRecord(
                     run_id=run.id,
                     record_type=record.record_type,
@@ -77,7 +98,7 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
                     confidence=record.confidence,
                     is_explicit=record.is_explicit,
                     is_inferred=record.is_inferred,
-                    review_status="pending",
+                    review_status=previous_review.decision if previous_review else "pending",
                 )
                 db.add(db_record)
                 db.flush()
@@ -90,6 +111,16 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
                         quote=source.quote,
                     )
                     db_record.evidence.append(db_evidence)
+
+                if previous_review:
+                    db_record.reviews.append(
+                        ReviewDecision(
+                            decision=previous_review.decision,
+                            original_value=record.payload,
+                            reviewed_value=previous_review.reviewed_value,
+                            reviewer_note="Carried forward from the previous extraction run.",
+                        )
+                    )
 
             run.status = "completed"
             job.status = "completed"
