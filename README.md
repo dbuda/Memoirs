@@ -202,6 +202,8 @@ The initial corpus contains three related interviews:
 - `02_priya_bennett.txt` follows Priya Bennett, Nora's daughter, and provides a second account of shared family events.
 - `03_mei_tan.txt` follows Mei Tan, Nora's friend and former business partner.
 
+JSON request fixtures with the same interviews are stored next to the text files. Each JSON file contains `title`, `subject`, `interviewer`, `interview_date` and the complete transcript in `text`, so it can be used directly with `POST /documents` after removing the metadata fields from the request body or with a small client script.
+
 The interviews intentionally contain useful extraction edge cases:
 
 - Nora, Norrie, Nor and Nana Norrie are references to the same person.
