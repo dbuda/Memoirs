@@ -3,6 +3,7 @@ import pytest
 from app.extraction.chunking import TranscriptSegment, build_chunks
 from app.extraction.provider import FakeExtractionProvider
 from app.extraction.validation import EvidenceValidationError, validate_records
+from app.services.ingestion import parse_transcript
 
 
 def test_chunking_preserves_segment_context() -> None:
@@ -40,3 +41,11 @@ def test_invalid_evidence_is_rejected() -> None:
 
     with pytest.raises(EvidenceValidationError, match="does not match"):
         validate_records([record], [segment])
+
+
+def test_ingestion_accepts_transcripts_without_timestamps() -> None:
+    segments = parse_transcript("NORA: Nora Bennett opened The Lantern cafe.\n")
+
+    assert len(segments) == 1
+    assert segments[0].speaker == "NORA"
+    assert segments[0].text == "Nora Bennett opened The Lantern cafe."

@@ -3,7 +3,9 @@ import re
 from app.extraction.chunking import TranscriptSegment
 
 
-TRANSCRIPT_LINE = re.compile(r"^\[(?P<timestamp>[^]]+)\]\s+(?P<speaker>[A-Z_]+):\s+(?P<text>.+)$")
+TRANSCRIPT_LINE = re.compile(
+    r"^(?:\[(?P<timestamp>[^]]+)\]\s+)?(?P<speaker>[A-Z_]+):\s+(?P<text>.+)$"
+)
 
 
 def parse_transcript(text: str) -> list[TranscriptSegment]:
