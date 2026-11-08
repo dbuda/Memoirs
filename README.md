@@ -14,7 +14,7 @@ A life story is not a clean database record. An interview can contain:
 - facts spread across multiple transcript sections;
 - statements that are explicit, inferred or uncertain.
 
-The demo will use two or three fictional interview transcripts and extract:
+The demo uses three fictional interview transcripts and extracts:
 
 - people and aliases;
 - life events;
@@ -40,9 +40,9 @@ The demo will use two or three fictional interview transcripts and extract:
 
 ## Deliberate Scope
 
-The implementation will be small enough to understand in one sitting, but realistic enough to show production judgement.
+The implementation is small enough to understand in one sitting, but realistic enough to show production judgement.
 
-The demo will include:
+The demo includes:
 
 1. A small FastAPI service.
 2. A PostgreSQL database managed with SQLAlchemy and Alembic.
@@ -54,7 +54,7 @@ The demo will include:
 8. A retrieval endpoint that returns records together with supporting evidence.
 9. A compact evaluation dataset and regression tests.
 
-Extraction runs will execute through a Celery worker. Redis will be used as the broker, while PostgreSQL remains the source of truth for job state, extraction runs and extracted data. This keeps the API responsive and makes retries and failure handling explicit without introducing multiple domain services.
+Extraction runs execute through a Celery worker. Redis is the broker, while PostgreSQL remains the source of truth for job state, extraction runs and extracted data. This keeps the API responsive and makes retries and failure handling explicit without introducing multiple domain services.
 
 ## Example Flow
 
@@ -85,7 +85,7 @@ evidence-linked knowledge available to editors
 
 ## Evidence and Uncertainty
 
-Every extracted record should be traceable to one or more transcript spans. An evidence record will contain at least:
+Every extracted record is traceable to one or more transcript spans. An evidence record contains at least:
 
 - source document identifier;
 - segment identifier;
@@ -93,13 +93,86 @@ Every extracted record should be traceable to one or more transcript spans. An e
 - quoted text;
 - extraction run identifier.
 
-Dates will not be reduced to a single guessed value. The model will preserve the original expression and represent the interpreted range, precision and whether the interpretation was inferred. For example, `in the early 1980s` can be stored as an approximate range rather than silently becoming `1982-01-01`.
+Dates are not reduced to a single guessed value. The model preserves the original expression and represents the interpreted range, precision and whether the interpretation was inferred. For example, `in the early 1980s` can be stored as an approximate range rather than silently becoming `1982-01-01`.
 
-The demo will distinguish:
+The demo distinguishes:
 
 - explicit statements, such as `I moved to Perth in 1984`;
 - inferred values, such as an estimated year based on age;
 - unresolved or contradictory values requiring review.
+
+## Example Output
+
+The deterministic provider returns records like these from Nora's interview. The two opening records intentionally disagree, and both survive:
+
+```json
+[
+  {
+    "record_type": "event",
+    "record_key": "event_the_lantern_opened__1990",
+    "payload": {
+      "event_key": "the_lantern_opened",
+      "date_text": "early nineties",
+      "date_start": "1990",
+      "date_end": "1993",
+      "date_precision": "decade"
+    },
+    "confidence": 0.8,
+    "is_explicit": true,
+    "is_inferred": false,
+    "evidence": [
+      {
+        "segment_id": 13,
+        "char_start": 0,
+        "char_end": 80,
+        "quote": "In the early nineties we opened a small cafe called The Lantern on Grange Road. "
+      }
+    ]
+  },
+  {
+    "record_type": "event",
+    "record_key": "event_the_lantern_opened__1992",
+    "payload": {
+      "event_key": "the_lantern_opened",
+      "date_text": "1992",
+      "date_start": "1992",
+      "date_end": "1992",
+      "date_precision": "year"
+    },
+    "confidence": 0.8,
+    "is_explicit": true,
+    "is_inferred": false,
+    "evidence": [
+      {
+        "segment_id": 13,
+        "char_start": 80,
+        "char_end": 108,
+        "quote": "Mei says we opened in 1992. "
+      }
+    ]
+  }
+]
+```
+
+Alias mentions are linked to a canonical person key, while each surface form keeps its own evidence:
+
+```json
+{
+  "record_type": "person",
+  "record_key": "person_nora_bennett",
+  "payload": {
+    "name": "Nora Bennett",
+    "aliases": ["Nana Norrie", "Nora", "Norrie"]
+  },
+  "confidence": 0.8,
+  "is_inferred": true,
+  "evidence": [
+    {"segment_id": 3, "char_start": 163, "char_end": 169, "quote": "Norrie"},
+    {"segment_id": 3, "char_start": 248, "char_end": 252, "quote": "Nora"},
+    {"segment_id": 3, "char_start": 294, "char_end": 305, "quote": "Nana Norrie"}
+  ]
+}
+```
 
 ## Review Model
 
@@ -124,7 +197,20 @@ python -m app.evaluation
 
 It compares extracted records with the reference set and reports precision, recall and F1 for people, places, claims and events, plus alias coverage, date-precision accuracy and evidence validity. The command exits non-zero below the configured threshold, so the same check runs in CI.
 
-The current deterministic baseline scores 1.00 on this small reference set. The rules and the reference set were developed together, so the result is a regression guard, not an independent benchmark. A real LLM provider will be evaluated against the same reference set, and the reference set will grow as edge cases are reviewed.
+Current baseline:
+
+```text
+type       precision  recall     f1     tp  fp  fn
+person     1.00       1.00      1.00    19   0   0
+place      1.00       1.00      1.00    17   0   0
+claim      1.00       1.00      1.00    11   0   0
+event      1.00       1.00      1.00    32   0   0
+alias      1.00 (22/22)
+date       1.00 (31/31)
+evidence   1.00 (211/211)
+```
+
+The rules and the reference set were developed together, so these numbers are a regression guard, not an independent benchmark. The structured-output provider can be evaluated against the same reference set, and the reference set will grow as edge cases are reviewed.
 
 ## API Surface
 
@@ -159,7 +245,7 @@ curl "http://localhost:8000/documents/1/search?q=lantern"
 - Docker Compose for the complete local stack
 - One LLM provider adapter with a deterministic fake adapter for tests
 
-The demo will avoid introducing a framework-heavy agent stack. Extraction logic should remain visible, testable and replaceable. Kubernetes, a separate frontend service and other deployment infrastructure are outside the scope of this demo.
+The demo avoids introducing a framework-heavy agent stack. Extraction logic should remain visible, testable and replaceable. Kubernetes, a separate frontend service and other deployment infrastructure are outside the scope of this demo.
 
 ## Local Development
 
@@ -214,7 +300,9 @@ The provider requests a JSON schema, parses the response with Pydantic and then 
 - multi-tenant production infrastructure;
 - perfect chronological reconstruction;
 - automatic publication without editorial review;
-- benchmark claims based on a tiny synthetic dataset.
+- benchmark claims based on a tiny synthetic dataset;
+- authentication or multi-user permissions;
+- production-scale retrieval or ranking.
 
 ## Implementation Plan
 
@@ -222,7 +310,7 @@ The implementation plan and technical decisions are documented in [`docs/IMPLEME
 
 ## Data and Privacy
 
-All initial transcripts will be fictional and created specifically for this demo. No real family histories, personal data or private interviews should be committed to the repository.
+All transcripts are fictional and created specifically for this demo. No real family histories, personal data or private interviews should be committed to the repository.
 
 ## Included Fictional Corpus
 

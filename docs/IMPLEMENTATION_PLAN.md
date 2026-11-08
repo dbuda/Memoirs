@@ -328,3 +328,27 @@ The Compose setup should include healthchecks and environment configuration thro
 - No claim that the demo is production-ready.
 
 These exclusions keep the project focused on the core question for this role: can structured knowledge be extracted from messy narratives while remaining accurate, reviewable and traceable?
+
+## 11. Implementation Status
+
+Implemented and covered by automated tests:
+
+- [x] FastAPI service with ingestion, extraction, job, record, search and review endpoints.
+- [x] PostgreSQL models and Alembic migrations, including idempotent document ingestion.
+- [x] Context-preserving chunking and evidence spans validated against segment text.
+- [x] Deterministic provider covering people, aliases, places, dated events, claims and themes.
+- [x] Structured-output provider for OpenAI-compatible APIs behind the same interface.
+- [x] Celery worker with retries, idempotent jobs and review decisions carried across runs.
+- [x] Readiness endpoint checking PostgreSQL and Redis.
+- [x] Hand-reviewed reference set and offline evaluation with precision, recall, F1, alias, date and evidence metrics.
+- [x] Ruff, CI lint/format/test/evaluation pipeline and SQLite-backed API integration tests.
+
+Manual smoke test for the complete stack:
+
+```bash
+cp .env.example .env
+docker compose up --build
+docker compose exec api alembic upgrade head
+docker compose exec api memoirs-seed
+docker compose exec api python -m app.evaluation
+```
