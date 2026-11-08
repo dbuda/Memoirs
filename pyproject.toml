@@ -21,6 +21,7 @@ dev = [
 ]
 
 [project.scripts]
+memoirs-eval = "app.evaluation:main"
 memoirs-seed = "app.seed:main"
 
 [tool.pytest.ini_options]

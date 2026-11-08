@@ -23,3 +23,5 @@ jobs:
         run: ruff format --check .
       - name: Tests
         run: pytest -q
+      - name: Evaluate extraction quality
+        run: python -m app.evaluation --threshold 0.9

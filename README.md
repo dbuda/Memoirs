@@ -116,17 +116,15 @@ When a document is reprocessed, older runs remain available for audit, but `/doc
 
 ## Quality Evaluation
 
-The demo will contain a small reviewed reference set created from the fictional transcripts. Tests and evaluation code will measure at least:
+A hand-reviewed reference set lives in [`data/gold_reference.json`](data/gold_reference.json). Run the offline evaluation with:
 
-- entity extraction precision and recall;
-- event extraction precision and recall;
-- evidence span validity;
-- relation or alias linking accuracy;
-- date interpretation errors;
-- unsupported claim rate;
-- schema validation failures.
+```bash
+python -m app.evaluation
+```
 
-The numbers will be treated as a baseline, not as a claim that a small demo represents production quality. The important part is making quality measurable and failures inspectable.
+It compares extracted records with the reference set and reports precision, recall and F1 for people, places, claims and events, plus alias coverage, date-precision accuracy and evidence validity. The command exits non-zero below the configured threshold, so the same check runs in CI.
+
+The current deterministic baseline scores 1.00 on this small reference set. The rules and the reference set were developed together, so the result is a regression guard, not an independent benchmark. A real LLM provider will be evaluated against the same reference set, and the reference set will grow as edge cases are reviewed.
 
 ## Planned API Surface
 

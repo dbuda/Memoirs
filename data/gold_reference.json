@@ -1,0 +1,133 @@
+{
+  "description": "Hand-reviewed reference records for the fictional corpus. Events are identified by event_key and interpreted date_start.",
+  "documents": {
+    "01_nora_bennett.txt": {
+      "people": [
+        "person_alan_bennett",
+        "person_daniel_bennett",
+        "person_june_bennett",
+        "person_mei_tan",
+        "person_mrs_evans",
+        "person_nora_bennett",
+        "person_priya_bennett"
+      ],
+      "places": [
+        "place_adelaide",
+        "place_australia",
+        "place_england",
+        "place_grange_road",
+        "place_liverpool",
+        "place_toxteth",
+        "place_woodville"
+      ],
+      "claims": [
+        "claim_nora_bennett_business_partner_of_mei_tan",
+        "claim_nora_bennett_friend_of_mei_tan",
+        "claim_nora_bennett_married_to_alan_bennett",
+        "claim_nora_bennett_parent_of_daniel_bennett",
+        "claim_nora_bennett_parent_of_priya_bennett"
+      ],
+      "events": [
+        {"event_key": "alan_illness", "date_start": "2003", "date_precision": "year"},
+        {"event_key": "daniel_born", "date_start": "1981", "date_precision": "year"},
+        {"event_key": "june_born", "date_start": null, "date_precision": "unknown"},
+        {"event_key": "moved_to_adelaide", "date_start": "1986", "date_precision": "year"},
+        {"event_key": "nora_born", "date_start": "1949", "date_precision": "season"},
+        {"event_key": "nora_library_job", "date_start": "1968", "date_precision": "year"},
+        {"event_key": "nora_married_alan", "date_start": "1970-09", "date_precision": "month"},
+        {"event_key": "nora_mei_met", "date_start": "1988", "date_precision": "year"},
+        {"event_key": "oral_history_group", "date_start": "2005", "date_precision": "year"},
+        {"event_key": "the_lantern_closed", "date_start": "2003", "date_precision": "year"},
+        {"event_key": "the_lantern_opened", "date_start": "1990", "date_precision": "decade"},
+        {"event_key": "the_lantern_opened", "date_start": "1992", "date_precision": "year"}
+      ],
+      "aliases": {
+        "person_alan_bennett": ["Al", "Alan"],
+        "person_daniel_bennett": ["Daniel"],
+        "person_june_bennett": ["June"],
+        "person_mei_tan": ["Mei"],
+        "person_nora_bennett": ["Nana Norrie", "Nora", "Norrie"],
+        "person_priya_bennett": ["Priya"]
+      }
+    },
+    "02_priya_bennett.txt": {
+      "people": [
+        "person_alan_bennett",
+        "person_daniel_bennett",
+        "person_evelyn",
+        "person_mei_tan",
+        "person_nora_bennett"
+      ],
+      "places": [
+        "place_adelaide",
+        "place_england",
+        "place_liverpool",
+        "place_melbourne",
+        "place_woodville"
+      ],
+      "claims": [
+        "claim_mei_tan_business_partner_of_nora_bennett",
+        "claim_mei_tan_friend_of_nora_bennett",
+        "claim_priya_bennett_child_of_alan_bennett",
+        "claim_priya_bennett_child_of_nora_bennett",
+        "claim_priya_bennett_sibling_of_daniel_bennett"
+      ],
+      "events": [
+        {"event_key": "alan_illness", "date_start": "2003", "date_precision": "year"},
+        {"event_key": "daniel_born", "date_start": "1981", "date_precision": "year"},
+        {"event_key": "evelyn_suitcase", "date_start": "1996", "date_precision": "year"},
+        {"event_key": "moved_to_adelaide", "date_start": "1986", "date_precision": "year"},
+        {"event_key": "moved_to_adelaide", "date_start": "1987-02", "date_precision": "month"},
+        {"event_key": "nora_mei_met", "date_start": "1988", "date_precision": "year"},
+        {"event_key": "priya_born", "date_start": "1978", "date_precision": "year"},
+        {"event_key": "priya_born", "date_start": "1979-01", "date_precision": "month"},
+        {"event_key": "the_lantern_closed", "date_start": "2003", "date_precision": "year"},
+        {"event_key": "the_lantern_opened", "date_start": "1991", "date_precision": "year"},
+        {"event_key": "the_lantern_opened", "date_start": "1992", "date_precision": "year"}
+      ],
+      "aliases": {
+        "person_alan_bennett": ["Al"],
+        "person_daniel_bennett": ["Daniel"],
+        "person_mei_tan": ["Mei"],
+        "person_nora_bennett": ["Nora"]
+      }
+    },
+    "03_mei_tan.txt": {
+      "people": [
+        "person_alan_bennett",
+        "person_evelyn",
+        "person_mei_tan",
+        "person_nora_bennett",
+        "person_priya_bennett",
+        "person_raymond_tan",
+        "person_walter"
+      ],
+      "places": [
+        "place_adelaide",
+        "place_australia",
+        "place_grange_road",
+        "place_ipoh",
+        "place_penang"
+      ],
+      "claims": ["claim_mei_tan_married_to_raymond_tan"],
+      "events": [
+        {"event_key": "alan_illness", "date_start": "2001", "date_precision": "year"},
+        {"event_key": "evelyn_suitcase", "date_start": "1996", "date_precision": "season"},
+        {"event_key": "mei_arrived_adelaide", "date_start": "1974", "date_precision": "year"},
+        {"event_key": "mei_born", "date_start": "1953", "date_precision": "year"},
+        {"event_key": "mei_married_raymond", "date_start": "1976", "date_precision": "year"},
+        {"event_key": "nora_mei_met", "date_start": "1989", "date_precision": "year"},
+        {"event_key": "the_lantern_closed", "date_start": "2003", "date_precision": "year"},
+        {"event_key": "the_lantern_opened", "date_start": "1992-03", "date_precision": "month"},
+        {"event_key": "walter_letters", "date_start": "1994", "date_precision": "year"}
+      ],
+      "aliases": {
+        "person_alan_bennett": ["Alan"],
+        "person_mei_tan": ["Mei Chen"],
+        "person_nora_bennett": ["Eleanor", "Nana Norrie", "Nor", "Nora", "Norrie"],
+        "person_priya_bennett": ["Priya"],
+        "person_raymond_tan": ["Raymond"]
+      }
+    }
+  }
+}

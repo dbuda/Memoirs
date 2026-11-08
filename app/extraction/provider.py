@@ -122,28 +122,28 @@ class FakeExtractionProvider:
                 continue
             chosen.append(match)
 
+        grouped: dict[str, list[tuple[int, int, dict[str, object]]]] = {}
+        for match in sorted(chosen, key=lambda item: item[0]):
+            grouped.setdefault(str(match[2]["key"]), []).append(match)
+
         records: list[ExtractedRecord] = []
-        seen: set[str] = set()
-        for start, end, entry in sorted(chosen, key=lambda item: item[0]):
-            key = str(entry["key"])
-            if key in seen:
-                continue
-            seen.add(key)
-            surface = str(entry["surface"])
-            name = str(entry["name"])
+        for key, mentions in grouped.items():
+            name = str(mentions[0][2]["name"])
+            surfaces = {str(mention[2]["surface"]) for mention in mentions}
+            aliases = sorted(surface for surface in surfaces if surface.lower() != name.lower())
+            has_canonical = any(surface.lower() == name.lower() for surface in surfaces)
             payload: dict[str, object] = {"name": name}
-            is_alias = surface.lower() != name.lower()
-            if is_alias:
-                payload["aliases"] = [surface]
+            if aliases:
+                payload["aliases"] = aliases
             records.append(
                 ExtractedRecord(
                     record_type=record_type,
                     record_key=f"{record_type}_{key}",
                     payload=payload,
-                    confidence=0.8 if is_alias else 0.95,
-                    is_explicit=not is_alias,
-                    is_inferred=is_alias,
-                    evidence=[self._evidence(segment, start, end)],
+                    confidence=0.95 if has_canonical else 0.8,
+                    is_explicit=has_canonical,
+                    is_inferred=not has_canonical,
+                    evidence=[self._evidence(segment, start, end) for start, end, _ in mentions],
                 )
             )
         return records
@@ -158,6 +158,8 @@ class FakeExtractionProvider:
             for match in pattern["compiled"].finditer(segment.text):
                 sentence_start, sentence_end = _sentence_span(segment.text, match.start())
                 sentence = segment.text[sentence_start:sentence_end]
+                if sentence.lstrip().lower().startswith("if "):
+                    continue
                 date = (
                     parse_date_expression(match.group(0))
                     or parse_date_expression(sentence[match.end() - sentence_start :])
