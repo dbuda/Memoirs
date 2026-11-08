@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from app.celery_app import celery_app
 from app.db import SessionLocal
 from app.extraction.chunking import TranscriptSegment
+from app.extraction.factory import build_provider
 from app.extraction.pipeline import extract_records
 from app.models import Evidence, ExtractionRun, Job, KnowledgeRecord, ReviewDecision, Segment
 
@@ -60,7 +61,7 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
                 )
                 for segment in source_segments
             ]
-            records_by_key = extract_records(segments)
+            records_by_key = extract_records(segments, build_provider(run.provider))
 
             previous_records = db.scalars(
                 select(KnowledgeRecord)

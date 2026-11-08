@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
+from app.extraction.llm import PROMPT_VERSION
 from app.models import Document, ExtractionRun, Job, Segment
 from app.services.ingestion import parse_transcript
 from app.tasks import extract_document
@@ -59,15 +61,20 @@ def ingest_document(
 def queue_extraction(
     db: Session,
     document: Document,
-    provider: str = "fake",
-    model: str = "deterministic-demo",
-    prompt_version: str = "v1",
+    provider: str | None = None,
+    model: str | None = None,
+    prompt_version: str | None = None,
 ) -> Job:
+    settings = get_settings()
+    selected_provider = (provider or settings.llm_provider).strip().lower()
+    selected_model = model or (
+        "deterministic-demo" if selected_provider == "fake" else settings.llm_model
+    )
     run = ExtractionRun(
         document_id=document.id,
-        provider=provider,
-        model=model,
-        prompt_version=prompt_version,
+        provider=selected_provider,
+        model=selected_model,
+        prompt_version=prompt_version or PROMPT_VERSION,
     )
     db.add(run)
     db.flush()

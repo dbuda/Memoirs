@@ -189,7 +189,18 @@ curl http://localhost:8000/health/ready
 
 The readiness endpoint verifies both PostgreSQL and the Redis broker. Document ingestion is idempotent: posting the same transcript twice returns the existing document instead of creating a duplicate.
 
-The first provider is deterministic and does not require an API key. It exists to exercise the pipeline, evidence validation and review workflow. A real structured-output provider can be added behind the same `ExtractionProvider` interface later.
+The default provider is deterministic and does not require an API key. It exists to exercise the pipeline, evidence validation and review workflow without external calls.
+
+A structured-output provider for OpenAI-compatible chat completion APIs is available behind the same `ExtractionProvider` interface. Enable it in `.env`:
+
+```bash
+LLM_PROVIDER=openai
+LLM_API_KEY=...
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+```
+
+The provider requests a JSON schema, parses the response with Pydantic and then runs the same evidence validation as the deterministic provider. A quote that is not an exact substring of the referenced segment is rejected before it reaches the database. The HTTP adapter is covered by mocked transport tests, so the demo stays runnable without an API key.
 
 ## Non-Goals
 
