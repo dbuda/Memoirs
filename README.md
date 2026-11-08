@@ -176,6 +176,21 @@ docker compose exec api alembic upgrade head
 
 The API is available at `http://localhost:8000`, and interactive documentation is available at `http://localhost:8000/docs`.
 
+Load the fictional corpus and queue extraction jobs in one step:
+
+```bash
+docker compose exec api memoirs-seed
+```
+
+Liveness and readiness checks:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/health/ready
+```
+
+The readiness endpoint verifies both PostgreSQL and the Redis broker. Document ingestion is idempotent: posting the same transcript twice returns the existing document instead of creating a duplicate.
+
 The first provider is deterministic and does not require an API key. It exists to exercise the pipeline, evidence validation and review workflow. A real structured-output provider can be added behind the same `ExtractionProvider` interface later.
 
 ## Non-Goals

@@ -2,7 +2,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 RecordType = Literal["person", "event", "claim", "place", "theme"]
 ReviewStatus = Literal["pending", "approved", "corrected", "rejected"]
 

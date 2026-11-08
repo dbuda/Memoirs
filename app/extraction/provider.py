@@ -58,7 +58,10 @@ class FakeExtractionProvider:
                         ExtractedRecord(
                             record_type="event",
                             record_key="the_lantern_opened",
-                            payload={"name": "The Lantern opening", "date_precision": "uncertain_year"},
+                            payload={
+                                "name": "The Lantern opening",
+                                "date_precision": "uncertain_year",
+                            },
                             confidence=0.82,
                             is_explicit=False,
                             is_inferred=True,

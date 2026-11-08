@@ -17,9 +17,14 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String(255))
     language: Mapped[str] = mapped_column(String(16), default="en")
     source_version: Mapped[str] = mapped_column(String(64), default="v1")
+    content_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    segments: Mapped[list["Segment"]] = relationship(back_populates="document", cascade="all, delete-orphan")
-    runs: Mapped[list["ExtractionRun"]] = relationship(back_populates="document", cascade="all, delete-orphan")
+    segments: Mapped[list["Segment"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )
+    runs: Mapped[list["ExtractionRun"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )
 
 
 class Segment(Base):
@@ -46,7 +51,9 @@ class ExtractionRun(Base):
     status: Mapped[str] = mapped_column(String(32), default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     document: Mapped[Document] = relationship(back_populates="runs")
-    records: Mapped[list["KnowledgeRecord"]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    records: Mapped[list["KnowledgeRecord"]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )
 
 
 class KnowledgeRecord(Base):
@@ -86,7 +93,9 @@ class Evidence(Base):
     __tablename__ = "evidence"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    extraction_run_id: Mapped[int] = mapped_column(ForeignKey("extraction_runs.id", ondelete="CASCADE"))
+    extraction_run_id: Mapped[int] = mapped_column(
+        ForeignKey("extraction_runs.id", ondelete="CASCADE")
+    )
     segment_id: Mapped[int] = mapped_column(ForeignKey("segments.id", ondelete="CASCADE"))
     char_start: Mapped[int] = mapped_column(Integer)
     char_end: Mapped[int] = mapped_column(Integer)
@@ -132,4 +141,6 @@ class RecordEvidence(Base):
     record_id: Mapped[int] = mapped_column(
         ForeignKey("knowledge_records.id", ondelete="CASCADE"), primary_key=True
     )
-    evidence_id: Mapped[int] = mapped_column(ForeignKey("evidence.id", ondelete="CASCADE"), primary_key=True)
+    evidence_id: Mapped[int] = mapped_column(
+        ForeignKey("evidence.id", ondelete="CASCADE"), primary_key=True
+    )

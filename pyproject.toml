@@ -4,9 +4,9 @@ version = "0.1.0"
 description = "Evidence-linked information extraction demo for memoir interviews"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.14,<2.0",
     "celery[redis]>=5.4,<6.0",
     "fastapi>=0.115,<1.0",
-    "alembic>=1.14,<2.0",
     "psycopg[binary]>=3.2,<4.0",
     "pydantic-settings>=2.6,<3.0",
     "sqlalchemy>=2.0,<3.0",
@@ -17,10 +17,26 @@ dependencies = [
 dev = [
     "httpx>=0.27,<1.0",
     "pytest>=8.3,<9.0",
+    "ruff>=0.7,<1.0",
 ]
+
+[project.scripts]
+memoirs-seed = "app.seed:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["docs", "alembic/script.py.mako"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*" = ["E501"]
 
 [build-system]
 requires = ["setuptools>=75"]

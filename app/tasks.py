@@ -1,5 +1,6 @@
 from celery import Task
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.celery_app import celery_app
 from app.db import SessionLocal
@@ -7,7 +8,6 @@ from app.extraction.chunking import TranscriptSegment, build_chunks
 from app.extraction.provider import FakeExtractionProvider
 from app.extraction.validation import validate_records
 from app.models import Evidence, ExtractionRun, Job, KnowledgeRecord, ReviewDecision, Segment
-from sqlalchemy.orm import selectinload
 
 
 class RetryableExtractionError(RuntimeError):
@@ -52,7 +52,9 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
 
         try:
             source_segments = db.scalars(
-                select(Segment).where(Segment.document_id == run.document_id).order_by(Segment.sequence_number)
+                select(Segment)
+                .where(Segment.document_id == run.document_id)
+                .order_by(Segment.sequence_number)
             ).all()
             segments = [
                 TranscriptSegment(
@@ -130,7 +132,7 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
             job.status = "retrying"
             job.error_message = str(exc)
             db.commit()
-            raise self.retry(exc=exc, countdown=5)
+            raise self.retry(exc=exc, countdown=5) from exc
         except Exception as exc:
             run.status = "failed"
             job.status = "failed"
