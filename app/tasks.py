@@ -8,10 +8,39 @@ from app.extraction.chunking import TranscriptSegment, build_chunks
 from app.extraction.provider import FakeExtractionProvider
 from app.extraction.validation import validate_records
 from app.models import Evidence, ExtractionRun, Job, KnowledgeRecord, ReviewDecision, Segment
+from app.schemas import ExtractedRecord
+
+MAX_EVIDENCE_PER_RECORD = 8
 
 
 class RetryableExtractionError(RuntimeError):
     pass
+
+
+def merge_records(target: ExtractedRecord, source: ExtractedRecord) -> None:
+    """Merge repeated mentions of the same record across chunk boundaries."""
+    aliases = set(target.payload.get("aliases", []))
+    aliases.update(source.payload.get("aliases", []))
+    if aliases:
+        target.payload["aliases"] = sorted(aliases)
+
+    for key, value in source.payload.items():
+        if key == "aliases":
+            continue
+        if key not in target.payload or target.payload[key] in (None, ""):
+            target.payload[key] = value
+
+    spans = {(item.segment_id, item.char_start, item.char_end) for item in target.evidence}
+    for item in source.evidence:
+        span = (item.segment_id, item.char_start, item.char_end)
+        if span in spans or len(target.evidence) >= MAX_EVIDENCE_PER_RECORD:
+            continue
+        target.evidence.append(item)
+        spans.add(span)
+
+    target.confidence = max(target.confidence, source.confidence)
+    target.is_explicit = target.is_explicit or source.is_explicit
+    target.is_inferred = target.is_inferred and source.is_inferred
 
 
 class DatabaseTask(Task):
@@ -69,7 +98,12 @@ def extract_document(self, job_id: int, run_id: int) -> dict[str, int | str]:
             records_by_key = {}
             for chunk in build_chunks(segments):
                 for record in validate_records(provider.extract(chunk), segments):
-                    records_by_key.setdefault((record.record_type, record.record_key), record)
+                    key = (record.record_type, record.record_key)
+                    existing = records_by_key.get(key)
+                    if existing is None:
+                        records_by_key[key] = record
+                    else:
+                        merge_records(existing, record)
 
             previous_records = db.scalars(
                 select(KnowledgeRecord)

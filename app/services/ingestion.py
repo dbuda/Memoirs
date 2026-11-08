@@ -6,6 +6,8 @@ TRANSCRIPT_LINE = re.compile(
     r"^(?:\[(?P<timestamp>[^]]+)\]\s+)?(?P<speaker>[A-Z_]+):\s+(?P<text>.+)$"
 )
 
+METADATA_KEYS = {"TITLE", "SUBJECT", "INTERVIEWER", "NOTE", "DATE", "SOURCE", "TRANSCRIPT"}
+
 
 def parse_transcript(text: str) -> list[TranscriptSegment]:
     """Parse labelled transcript lines and preserve offsets into the source text."""
@@ -14,7 +16,7 @@ def parse_transcript(text: str) -> list[TranscriptSegment]:
     for line in text.splitlines(keepends=True):
         line_without_newline = line.rstrip("\r\n")
         match = TRANSCRIPT_LINE.match(line_without_newline)
-        if match:
+        if match and match.group("speaker") not in METADATA_KEYS:
             source_text = match.group("text")
             text_start = offset + match.start("text")
             segments.append(

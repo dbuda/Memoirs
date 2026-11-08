@@ -1,0 +1,360 @@
+"""Declarative rules for the deterministic baseline extractor.
+
+The rules are intentionally readable and replaceable. They model the kinds of
+questions a memoir pipeline asks of an interview: who is mentioned, which
+places and events are described, how people are related and which themes recur.
+A real LLM provider will produce the same record shape from the same chunks.
+"""
+
+PEOPLE: list[dict[str, object]] = [
+    {
+        "key": "nora_bennett",
+        "name": "Nora Bennett",
+        "surfaces": ["Nora Bennett", "Nana Norrie", "Norrie", "Nora", "Nor", "Eleanor"],
+    },
+    {
+        "key": "priya_bennett",
+        "name": "Priya Bennett",
+        "surfaces": ["Priya Bennett", "Priya", "Pree"],
+    },
+    {
+        "key": "alan_bennett",
+        "name": "Alan Bennett",
+        "surfaces": ["Alan Bennett", "Alan", "Al"],
+    },
+    {
+        "key": "daniel_bennett",
+        "name": "Daniel Bennett",
+        "surfaces": ["Daniel Bennett", "Daniel"],
+    },
+    {
+        "key": "mei_tan",
+        "name": "Mei Tan",
+        "surfaces": ["Mei Tan", "Mei Chen", "Mei"],
+    },
+    {
+        "key": "raymond_tan",
+        "name": "Raymond Tan",
+        "surfaces": ["Raymond Tan", "Raymond"],
+    },
+    {"key": "june_bennett", "name": "June Bennett", "surfaces": ["June"]},
+    {"key": "helen_ward", "name": "Helen Ward", "surfaces": ["Helen Ward", "Helen"]},
+    {"key": "evelyn", "name": "Evelyn", "surfaces": ["Evelyn"]},
+    {"key": "walter", "name": "Walter", "surfaces": ["Walter"]},
+    {"key": "mrs_evans", "name": "Mrs Evans", "surfaces": ["Mrs Evans"]},
+]
+
+PLACES: list[dict[str, object]] = [
+    {"key": "liverpool", "name": "Liverpool", "surfaces": ["Liverpool"]},
+    {"key": "adelaide", "name": "Adelaide", "surfaces": ["Adelaide"]},
+    {"key": "woodville", "name": "Woodville", "surfaces": ["Woodville"]},
+    {"key": "grange_road", "name": "Grange Road", "surfaces": ["Grange Road"]},
+    {"key": "toxteth", "name": "Toxteth", "surfaces": ["Toxteth"]},
+    {"key": "penang", "name": "Penang", "surfaces": ["Penang"]},
+    {"key": "ipoh", "name": "Ipoh", "surfaces": ["Ipoh"]},
+    {"key": "melbourne", "name": "Melbourne", "surfaces": ["Melbourne"]},
+    {"key": "england", "name": "England", "surfaces": ["England"]},
+    {"key": "australia", "name": "Australia", "surfaces": ["Australia"]},
+]
+
+THEMES: dict[str, list[str]] = {
+    "family": [
+        "family",
+        "daughter",
+        "son",
+        "mother",
+        "father",
+        "sister",
+        "brother",
+        "grandchildren",
+        "husband",
+        "married",
+        "wife",
+        "parents",
+    ],
+    "migration": [
+        "england",
+        "australia",
+        "adelaide",
+        "flew out",
+        "arrived",
+        "moved",
+        "leaving",
+        "left england",
+        "came to",
+    ],
+    "work": [
+        "work",
+        "job",
+        "library",
+        "librarian",
+        "cafe",
+        "cooking",
+        "bookkeeping",
+        "mechanic",
+        "school",
+        "shop",
+        "business",
+        "accounts",
+    ],
+    "friendship": ["friend", "friendship", "closest friend", "auntie"],
+    "memory": [
+        "remember",
+        "memory",
+        "memoir",
+        "forget",
+        "uncertain",
+        "evidence",
+        "stories",
+        "history",
+    ],
+    "loss": ["lost", "ill", "health", "died", "sad", "closed", "closing", "fail"],
+    "community": [
+        "neighbour",
+        "community",
+        "strangers",
+        "people came",
+        "noticeboard",
+        "oral-history",
+    ],
+}
+
+EVENT_PATTERNS: list[dict[str, object]] = [
+    {
+        "key": "nora_born",
+        "summary": "Nora Bennett was born",
+        "event_type": "birth",
+        "subject": "nora_bennett",
+        "speakers": ["NORA"],
+        "pattern": r"\bI was born\b",
+    },
+    {
+        "key": "mei_born",
+        "summary": "Mei Tan was born",
+        "event_type": "birth",
+        "subject": "mei_tan",
+        "speakers": ["MEI"],
+        "pattern": r"\bI was born\b",
+    },
+    {
+        "key": "priya_born",
+        "summary": "Priya Bennett was born",
+        "event_type": "birth",
+        "subject": "priya_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bI was born\b",
+    },
+    {
+        "key": "daniel_born",
+        "summary": "Daniel Bennett was born",
+        "event_type": "birth",
+        "subject": "daniel_bennett",
+        "pattern": r"\bDaniel (?:was born|came along)\b",
+    },
+    {
+        "key": "june_born",
+        "summary": "June was born",
+        "event_type": "birth",
+        "subject": "june_bennett",
+        "pattern": r"\bJune was born\b",
+    },
+    {
+        "key": "nora_married_alan",
+        "summary": "Nora Bennett married Alan Bennett",
+        "event_type": "marriage",
+        "subject": "nora_bennett",
+        "speakers": ["NORA"],
+        "pattern": r"\bWe married\b",
+    },
+    {
+        "key": "mei_married_raymond",
+        "summary": "Mei Tan married Raymond Tan",
+        "event_type": "marriage",
+        "subject": "mei_tan",
+        "speakers": ["MEI"],
+        "pattern": r"\bI married Raymond Tan\b",
+    },
+    {
+        "key": "the_lantern_opened",
+        "summary": "The Lantern opened",
+        "event_type": "business_opening",
+        "pattern": (
+            r"\b(?:we opened a small cafe called The Lantern|opened The Lantern"
+            r"|The Lantern opened|the cafe opened|opened in (?:19|20)\d{2}"
+            r"|it opened in (?:19|20)\d{2})\b"
+        ),
+    },
+    {
+        "key": "the_lantern_closed",
+        "summary": "The Lantern closed",
+        "event_type": "business_closure",
+        "pattern": r"\b(?:We closed The Lantern|The Lantern closed|the cafe closed)\b",
+    },
+    {
+        "key": "nora_mei_met",
+        "summary": "Nora Bennett and Mei Tan met",
+        "event_type": "meeting",
+        "pattern": r"\b(?:I met her|they met|We met|met her)\b",
+    },
+    {
+        "key": "moved_to_adelaide",
+        "summary": "The Bennett family moved to Adelaide",
+        "event_type": "migration",
+        "speakers": ["NORA", "PRIYA"],
+        "pattern": (
+            r"\b(?:we flew out|we arrived in Adelaide|arrived in Adelaide"
+            r"|we arrived in [A-Z][a-z]+ \d{4})\b"
+        ),
+    },
+    {
+        "key": "mei_arrived_adelaide",
+        "summary": "Mei Tan arrived in Adelaide",
+        "event_type": "migration",
+        "subject": "mei_tan",
+        "speakers": ["MEI"],
+        "pattern": r"\bI came to Adelaide\b",
+    },
+    {
+        "key": "nora_library_job",
+        "summary": "Nora Bennett started work at the municipal library",
+        "event_type": "employment",
+        "subject": "nora_bennett",
+        "pattern": r"\bstarted part-time at the municipal library\b",
+    },
+    {
+        "key": "oral_history_group",
+        "summary": "Nora Bennett started an oral-history group",
+        "event_type": "community_project",
+        "subject": "nora_bennett",
+        "pattern": r"\bstarted a local oral-history group\b",
+    },
+    {
+        "key": "alan_illness",
+        "summary": "Alan Bennett became ill",
+        "event_type": "illness",
+        "subject": "alan_bennett",
+        "pattern": r"\bAlan(?:'s)? (?:health|became ill)\b|\bDad's health\b",
+    },
+    {
+        "key": "evelyn_suitcase",
+        "summary": "Evelyn lost a red suitcase",
+        "event_type": "lost_property",
+        "subject": "evelyn",
+        "pattern": r"\bred suitcase\b",
+    },
+    {
+        "key": "walter_letters",
+        "summary": "Walter started writing letters at the cafe",
+        "event_type": "community_story",
+        "subject": "walter",
+        "pattern": r"\bWalter started coming\b",
+    },
+]
+
+CLAIM_PATTERNS: list[dict[str, object]] = [
+    {
+        "key": "nora_bennett_married_to_alan_bennett",
+        "subject": "nora_bennett",
+        "predicate": "married_to",
+        "object": "alan_bennett",
+        "speakers": ["NORA"],
+        "pattern": r"\bWe married\b",
+    },
+    {
+        "key": "mei_tan_married_to_raymond_tan",
+        "subject": "mei_tan",
+        "predicate": "married_to",
+        "object": "raymond_tan",
+        "speakers": ["MEI"],
+        "pattern": r"\bI married Raymond Tan\b",
+    },
+    {
+        "key": "nora_bennett_parent_of_priya_bennett",
+        "subject": "nora_bennett",
+        "predicate": "parent_of",
+        "object": "priya_bennett",
+        "speakers": ["NORA"],
+        "pattern": r"\bOur daughter Priya\b",
+    },
+    {
+        "key": "nora_bennett_parent_of_daniel_bennett",
+        "subject": "nora_bennett",
+        "predicate": "parent_of",
+        "object": "daniel_bennett",
+        "speakers": ["NORA"],
+        "pattern": r"\bOur son Daniel\b",
+    },
+    {
+        "key": "priya_bennett_child_of_nora_bennett",
+        "subject": "priya_bennett",
+        "predicate": "child_of",
+        "object": "nora_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bMy mother, Nora\b",
+    },
+    {
+        "key": "priya_bennett_child_of_alan_bennett",
+        "subject": "priya_bennett",
+        "predicate": "child_of",
+        "object": "alan_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bMy father was Alan Bennett\b",
+    },
+    {
+        "key": "priya_bennett_sibling_of_daniel_bennett",
+        "subject": "priya_bennett",
+        "predicate": "sibling_of",
+        "object": "daniel_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bMy brother Daniel\b",
+    },
+    {
+        "key": "nora_bennett_friend_of_mei_tan",
+        "subject": "nora_bennett",
+        "predicate": "friend_of",
+        "object": "mei_tan",
+        "speakers": ["NORA"],
+        "pattern": r"\bWe became friends\b",
+    },
+    {
+        "key": "mei_tan_friend_of_nora_bennett",
+        "subject": "mei_tan",
+        "predicate": "friend_of",
+        "object": "nora_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bMei Tan was Mum's closest friend\b",
+    },
+    {
+        "key": "nora_bennett_business_partner_of_mei_tan",
+        "subject": "nora_bennett",
+        "predicate": "business_partner_of",
+        "object": "mei_tan",
+        "speakers": ["NORA"],
+        "pattern": r"\bwe opened a small cafe\b",
+    },
+    {
+        "key": "mei_tan_business_partner_of_nora_bennett",
+        "subject": "mei_tan",
+        "predicate": "business_partner_of",
+        "object": "nora_bennett",
+        "speakers": ["PRIYA"],
+        "pattern": r"\bMum and Mei's cafe\b",
+    },
+]
+
+UNCERTAINTY_CUES = [
+    "probably",
+    "perhaps",
+    "maybe",
+    "may have been",
+    "might",
+    "i think",
+    "i believe",
+    "or it may have been",
+    "around",
+    "almost certain",
+    "must have been",
+    "very early",
+    "not scientific evidence",
+    "sometimes says",
+]
