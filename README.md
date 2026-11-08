@@ -126,21 +126,25 @@ It compares extracted records with the reference set and reports precision, reca
 
 The current deterministic baseline scores 1.00 on this small reference set. The rules and the reference set were developed together, so the result is a regression guard, not an independent benchmark. A real LLM provider will be evaluated against the same reference set, and the reference set will grow as edge cases are reviewed.
 
-## Planned API Surface
+## API Surface
 
-The initial API will stay intentionally small:
+The API stays intentionally small:
 
 ```text
 POST /documents
 POST /documents/{document_id}/extract
 GET  /jobs/{job_id}
-GET  /documents/{document_id}/records
+GET  /documents/{document_id}/records?limit=&offset=
 GET  /records/{record_id}
-POST /review/items/{item_id}
-GET  /documents/{document_id}/search
+POST /review/items/{record_id}
+GET  /documents/{document_id}/search?q=
 ```
 
-The response for a record will include its current review state, confidence and evidence references. A frontend is not required for the first demo. Review can be exercised through the API and a small command-line script.
+The response for a record includes its current review state, confidence and evidence references. Search matches record payloads and evidence quotes case-insensitively and only searches the latest extraction run. A frontend is not required: review and search can be exercised through the API.
+
+```bash
+curl "http://localhost:8000/documents/1/search?q=lantern"
+```
 
 ## Technology Choices
 

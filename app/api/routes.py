@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import Text, cast, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
-from app.models import Document, ExtractionRun, Job, KnowledgeRecord, ReviewDecision
+from app.models import Document, Evidence, ExtractionRun, Job, KnowledgeRecord, ReviewDecision
 from app.schemas import (
     DocumentCreate,
     DocumentResponse,
@@ -61,6 +61,58 @@ def list_records(
                 selectinload(KnowledgeRecord.reviews),
             )
             .where(KnowledgeRecord.run_id == latest_run_id)
+            .order_by(KnowledgeRecord.id)
+            .limit(min(limit, 500))
+            .offset(offset)
+        ).all()
+    )
+
+
+@router.get("/records/{record_id}", response_model=RecordResponse)
+def get_record(record_id: int, db: Session = Depends(get_db)) -> KnowledgeRecord:
+    record = db.scalar(
+        select(KnowledgeRecord)
+        .options(
+            selectinload(KnowledgeRecord.evidence),
+            selectinload(KnowledgeRecord.reviews),
+        )
+        .where(KnowledgeRecord.id == record_id)
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return record
+
+
+@router.get("/documents/{document_id}/search", response_model=list[RecordResponse])
+def search_records(
+    document_id: int,
+    q: str = Query(min_length=1, max_length=200),
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+) -> list[KnowledgeRecord]:
+    latest_run_id = (
+        select(func.max(ExtractionRun.id))
+        .where(ExtractionRun.document_id == document_id)
+        .scalar_subquery()
+    )
+    pattern = f"%{q}%"
+    return list(
+        db.scalars(
+            select(KnowledgeRecord)
+            .options(
+                selectinload(KnowledgeRecord.evidence),
+                selectinload(KnowledgeRecord.reviews),
+            )
+            .outerjoin(KnowledgeRecord.evidence)
+            .where(KnowledgeRecord.run_id == latest_run_id)
+            .where(
+                or_(
+                    cast(KnowledgeRecord.payload, Text).ilike(pattern),
+                    Evidence.quote.ilike(pattern),
+                )
+            )
+            .distinct()
             .order_by(KnowledgeRecord.id)
             .limit(min(limit, 500))
             .offset(offset)
